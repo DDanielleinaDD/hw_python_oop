@@ -46,7 +46,8 @@ class Training:
 
     def get_spent_calories(self) -> float:
         """Получить количество затраченных калорий."""
-        pass
+        raise NotImplementedError('Определите get_spent_calories в %s.'
+                                  % (self.__class__.__name__))
 
     def show_training_info(self) -> InfoMessage:
         """Вернуть информационное сообщение о выполненной тренировке."""
@@ -62,9 +63,6 @@ class Running(Training):
     CALORIES_MEAN_SPEED_MULTIPLIER = 18
     CALORIES_MEAN_SPEED_SHIFT = 1.79
 
-    def __init__(self, action, duration, weight):
-        super().__init__(action, duration, weight)
-
     def get_spent_calories(self) -> float:
         return (((self.CALORIES_MEAN_SPEED_MULTIPLIER * self.get_mean_speed()
                 + self.CALORIES_MEAN_SPEED_SHIFT) * self.weight)
@@ -78,22 +76,22 @@ class SportsWalking(Training):
     KMH_IN_MSEC = 0.278
     CM_IN_M = 100
 
-    def __init__(self, action, duration, weight, height, LEN_STEP=0.65):
+    def __init__(self, action, duration, weight, height):
         super().__init__(action, duration, weight)
-        self.height = height / self.CM_IN_M
-        self.LEN_STEP = LEN_STEP
+        self.height = height
 
     def get_spent_calories(self) -> float:
         return ((self.CALORIES_WEIGHT_MULTIPLIER * self.weight
                 + ((self.get_mean_speed() * self.KMH_IN_MSEC)**2
-                 / self.height) * self.CALORIES_SPEED_HEIGHT_MULTIPLIER
+                 / (self.height / self.CM_IN_M))
+                * self.CALORIES_SPEED_HEIGHT_MULTIPLIER
                 * self.weight) * self.duration * self.MIN_IN_H)
 
 
 class Swimming(Training):
     """Тренировка: плавание."""
-    coef1 = 1.1
-    coef2 = 2
+    CALORIES_MEAN_SPEED_SHIFT = 1.1
+    CALORIES_WEIGHT_MULTIPLIER = 2
     LEN_STEP = 1.38
 
     def __init__(self, action, duration,
@@ -107,8 +105,9 @@ class Swimming(Training):
                 / self.duration)
 
     def get_spent_calories(self) -> float:
-        return ((self.get_mean_speed() + self.coef1)
-                * self.coef2 * self.weight * self.duration)
+        return ((self.get_mean_speed() + self.CALORIES_MEAN_SPEED_SHIFT)
+                * self.CALORIES_WEIGHT_MULTIPLIER
+                * self.weight * self.duration)
 
 
 def read_package(workout_type: str, data: list) -> Training:
